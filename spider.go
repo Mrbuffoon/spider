@@ -16,6 +16,8 @@ type Spider struct {
 	header map[string]string
 }
 
+var Url_array []string
+
 //定义 Spider get的方法
 func (sp Spider) get_html_header() string {
 	client := &http.Client{}
@@ -97,9 +99,36 @@ func spider_at_tag(url_tag string) {
 	}
 }
 
+func spider_all(url string) {
+
+	header := map[string]string{
+		"Host":                      "movie.douban.com",
+		"Connection":                "keep-alive",
+		"Cache-Control":             "max-age=0",
+		"Upgrade-Insecure-Requests": "1",
+		"User-Agent":                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+		"Referer":                   "https://movie.douban.com/top250",
+	}
+
+	//获取tag的url
+	spider_url := &Spider{url, header}
+	html_url := spider_url.get_html_header()
+	pattern_url := `<td><a href="(.*?)">`
+	rp_url := regexp.MustCompile(pattern_url)
+	tag_url := rp_url.FindAllStringSubmatch(html_url, -1)
+
+	//tag url保存起来
+	for i := 0; i < len(tag_url); i++ {
+		full_url := "https://book.douban.com" + string(tag_url[i][1])
+		Url_array = append(Url_array, full_url)
+		spider_at_tag(full_url)
+	}
+}
+
 func main() {
 	t1 := time.Now() // get current time
-	spider_at_tag("https://book.douban.com/tag/小说")
+	spider_all("https://book.douban.com/tag/?view=cloud")
 	elapsed := time.Since(t1)
 	fmt.Println("爬虫结束,总共耗时: ", elapsed)
 
