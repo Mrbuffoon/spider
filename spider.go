@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,7 +19,22 @@ type Spider struct {
 	header map[string]string
 }
 
+type Book struct {
+	Name  string
+	Score int
+	Star  int
+}
+type Bookslice []Book
+
 var Url_array []string
+
+func (b Bookslice) Len() { return len(b) }
+
+func (b Bookslice) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
+
+func (b Bookslice) Less(i, j int) bool { return b[i].Score < b[j].Score }
+
+var File_path []string
 
 //定义 Spider get的方法
 func (sp Spider) get_html_header() string {
@@ -60,6 +78,7 @@ func spider_at_tag(url_tag string) {
 
 	//创建tag文件
 	tag_file := "/home/ec2-user/workhome/spider/" + string(tag[0][1])
+	File_path = append(File_path, tag_file)
 	f, err := os.Create(tag_file)
 	if err != nil {
 		panic(err)
@@ -93,8 +112,8 @@ func spider_at_tag(url_tag string) {
 		//f.WriteString("\xEF\xBB\xBF")
 		//  打印全部数据和写入文件
 		for i := 0; i < len(find_txt2); i++ {
-			fmt.Printf("%s   %s   %s\n", find_txt4[i][1], find_txt3[i][1], find_txt2[i][1])
-			f.WriteString(find_txt4[i][1] + "\t" + find_txt3[i][1] + "\t" + find_txt2[i][1] + "\t" + "\r\n")
+			//fmt.Printf("%s   %s   %s\n", find_txt4[i][1], find_txt3[i][1], find_txt2[i][1])
+			f.WriteString(find_txt4[i][1] + "\t" + find_txt3[i][1] + "\t" + find_txt2[i][1] + "\r\n")
 		}
 	}
 }
@@ -126,10 +145,44 @@ func spider_all(url string) {
 	}
 }
 
+func parse_date() {
+	for i := 0; i < len(File_path); i++ {
+		fmt.Println("处理文件：" + File_path[i])
+		f, err := os.Open(File_path[i])
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+
+		var book Bookslice
+		var bb Book
+		br := bufio.NewReader(f)
+		for {
+			a, _, c := br.ReadLine()
+			if c == io.EOF {
+				break
+			}
+			ba := strings.split(string(a), "\t")
+			bb.Name = ba[0]
+			bb.Score = ba[1]
+			bb.Star = ba[2]
+			book = append(book, bb)
+			//fmt.Println(string(a))
+		}
+		sort.Stable(book)
+		for i := 0; i < 100; i++ {
+			fmt.Println(book[i].Name + "\t" + book[i].Score + "\t" + book[i].Star)
+		}
+
+	}
+}
+
 func main() {
 	t1 := time.Now() // get current time
 	spider_all("https://book.douban.com/tag/?view=cloud")
 	elapsed := time.Since(t1)
 	fmt.Println("爬虫结束,总共耗时: ", elapsed)
-
+	fmt.Println("开始处理数据...")
+	parse_date()
+	fmt.Println("处理完成！")
 }
