@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -28,7 +29,7 @@ type Bookslice []Book
 
 var Url_array []string
 
-func (b Bookslice) Len() { return len(b) }
+func (b Bookslice) Len() int { return len(b) }
 
 func (b Bookslice) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 
@@ -162,16 +163,16 @@ func parse_date() {
 			if c == io.EOF {
 				break
 			}
-			ba := strings.split(string(a), "\t")
+			ba := strings.Split(string(a), "\t")
 			bb.Name = ba[0]
-			bb.Score = ba[1]
-			bb.Star = ba[2]
+			bb.Score, err =strconv.Atoi(ba[1])
+			bb.Star, err = strconv.Atoi(ba[2])
 			book = append(book, bb)
 			//fmt.Println(string(a))
 		}
 		sort.Stable(book)
 		for i := 0; i < 100; i++ {
-			fmt.Println(book[i].Name + "\t" + book[i].Score + "\t" + book[i].Star)
+			fmt.Println(book[i].Name + "\t" + string(book[i].Score) + "\t" + string(book[i].Star))
 		}
 
 	}
